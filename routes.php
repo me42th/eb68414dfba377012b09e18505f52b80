@@ -7,6 +7,9 @@ switch($page){
     case 'register':
         do_register();
     break;
+    case 'mail-validation':
+        do_validation();
+    break;
     default:
         do_not_found();
     break;
