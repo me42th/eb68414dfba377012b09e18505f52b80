@@ -1,7 +1,13 @@
 <?php
 
 function do_register(){
-    render_view('register');
+    if($_POST['person']??false){
+        unset($_POST['person']['password-confirm']);
+        crud_create($_POST['person']);
+        header("Location: /?page=login");
+    } else {
+        render_view('register');
+    }
 }
 
 function do_login(){
