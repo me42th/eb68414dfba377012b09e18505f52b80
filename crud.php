@@ -1,20 +1,39 @@
 <?php
 
-function crud_create($user){
+function crud_load(){
     $data = file_get_contents(DATA_LOCATION);
     $data = json_decode($data);
-    $data[] = $user;
+    return $data;
+}
+
+function crud_flush($data){
     $data = json_encode($data);
     file_put_contents(DATA_LOCATION,$data);
 }
 
+function crud_create($user){
+    $data = crud_load();
+    $data[] = $user;
+    crud_flush($data);
+}
+
 function crud_restore($email){
-    $data = file_get_contents(DATA_LOCATION);
-    $data = json_decode($data);
+    $data = crud_load();
     foreach($data as $item){
         if($item->email === $email){
             return $item;
         }
     }
     return false;
+}
+
+function crud_update($user){
+    $data = crud_load();
+    foreach($data as &$item){
+        if($item->email === $user->email){
+            $item = $user;
+            break;
+        }
+    }
+    crud_flush($data);
 }

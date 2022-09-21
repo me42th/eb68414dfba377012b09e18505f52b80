@@ -17,6 +17,7 @@ function register_post(){
     if(count($validation_errors) == 0){
         unset($_POST['person']['password-confirm']);
         $_POST['person']['mail_validation'] = false;
+        $_POST['person']['password'] = md5($_POST['person']['password']);
         crud_create($_POST['person']);
         $email = $_POST['person']['email'];
         $url = APP_URL."?page=mail-validation&token=";
@@ -25,7 +26,7 @@ function register_post(){
         header("Location: /?page=login&from=register");
     } else {
         $messages = [
-            'validation_errors' => $validation_errors
+            'errors' => $validation_errors
         ];
         render_view('register', $messages);
     }
@@ -37,12 +38,58 @@ function do_login(){
         case 'register':
             $messages['success'] = "Você ainda precisa confirmar o email!";
         break;
+        case 'login':
+            do_login_authentication();
+            $messages['errors'] = [
+                "email" => "Email ou senha invalidos",
+                "password" => "Email ou senha invalidos"
+            ];
+        break;
+        case 'validation-success':
+            $messages['success'] = "Sua conta esta ativa!";
+        break;
+        case 'validation-problem':
+            $messages['errors'] = ['email' => "Link inválido ou expirado!"];
+        break;
     }
     render_view('login',$messages);
 }
 
+function do_login_authentication(){
+    $auth_flag = authentication(...$_POST['person']);
+    if($auth_flag){
+        header("Location: /");
+        exit;
+    }
+}
+
 function do_validation(){
-    echo "wip";
+    $email = ssl_decrypt($_GET['token']);
+    if($email){
+        do_validation_success($email);
+    } else {
+        do_validation_problem();
+    }
+
+}
+
+function do_home(){
+    render_view('home');
+}
+
+function do_validation_success($email){
+    $user = crud_restore($email);
+    if($user){
+        $user->mail_validation = true;
+        crud_update($user);
+        header("Location: /?page=login&from=validation-success");
+    } else {
+        do_validation_problem();
+    }
+}
+
+function do_validation_problem(){
+    header("Location: /?page=login&from=validation-problem");
 }
 
 function do_not_found(){
